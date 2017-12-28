@@ -4,6 +4,7 @@ import akka.actor.ActorSystem
 import akka.http.scaladsl.Http
 import akka.http.scaladsl.model._
 import akka.http.scaladsl.server.Directives._
+import akka.http.scaladsl.unmarshalling.PredefinedFromStringUnmarshallers.CsvSeq
 import akka.stream.ActorMaterializer
 
 object ProvicentiaApp {
@@ -22,7 +23,12 @@ object ProvicentiaApp {
       } ~ pathPrefix("references") {
         pathEndOrSingleSlash {
           get {
-            complete(HttpEntity(ContentTypes.`text/html(UTF-8)`, "List of all references"))
+            parameter("tags".as(CsvSeq[String])) { tags => {
+              complete(HttpEntity(ContentTypes.`text/html(UTF-8)`, s"List of all references filtered by $tags"))
+            }
+            } ~ {
+              complete(HttpEntity(ContentTypes.`text/html(UTF-8)`, "List of all references"))
+            }
           } ~ post {
             complete(HttpEntity(ContentTypes.`text/html(UTF-8)`, "Create a new reference"))
           }
