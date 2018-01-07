@@ -7,25 +7,24 @@ import akka.http.scaladsl.unmarshalling.PredefinedFromStringUnmarshallers.CsvSeq
 object References {
 
   val route = pathPrefix("references") {
-    pathEndOrSingleSlash {
-      get {
-        parameter("tags".as(CsvSeq[String])) { tags => {
-          complete(HttpEntity(ContentTypes.`text/html(UTF-8)`, s"List of all references filtered by $tags"))
+    (path(Segment) & pathEndOrSingleSlash) { id =>
+        get {
+          complete(HttpEntity(ContentTypes.`text/html(UTF-8)`, s"Reference with id $id"))
+        } ~ put {
+          complete(HttpEntity(ContentTypes.`text/html(UTF-8)`, s"Update reference with id $id"))
         }
-        } ~ {
-          complete(HttpEntity(ContentTypes.`text/html(UTF-8)`, "List of all references"))
+      } ~
+      pathEndOrSingleSlash {
+        get {
+          parameter("tags".as(CsvSeq[String])) { tags => {
+            complete(HttpEntity(ContentTypes.`text/html(UTF-8)`, s"List of all references filtered by $tags"))
+          }
+          } ~ {
+            complete(HttpEntity(ContentTypes.`text/html(UTF-8)`, "List of all references"))
+          }
+        } ~ post {
+          complete(HttpEntity(ContentTypes.`text/html(UTF-8)`, "Create a new reference"))
         }
-      } ~ post {
-        complete(HttpEntity(ContentTypes.`text/html(UTF-8)`, "Create a new reference"))
       }
-    }
-  } ~ pathPrefix("references" / Segment) { id =>
-    pathEndOrSingleSlash {
-      get {
-        complete(HttpEntity(ContentTypes.`text/html(UTF-8)`, s"Reference with id $id"))
-      } ~ put {
-        complete(HttpEntity(ContentTypes.`text/html(UTF-8)`, s"Update reference with id $id"))
-      }
-    }
   }
 }
