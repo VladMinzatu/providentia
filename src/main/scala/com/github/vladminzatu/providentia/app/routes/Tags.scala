@@ -2,8 +2,9 @@ package com.github.vladminzatu.providentia.app.routes
 
 import akka.http.scaladsl.model.{ContentTypes, HttpEntity}
 import akka.http.scaladsl.server.Directives._
+import com.github.vladminzatu.providentia.repository.TagsRepository
 
-object Tags {
+class Tags(val tagsRepository: TagsRepository) {
 
   val route = pathPrefix("tags") {
     (path(Segment) & pathEndOrSingleSlash) { id =>

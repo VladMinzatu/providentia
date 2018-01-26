@@ -3,8 +3,9 @@ package com.github.vladminzatu.providentia.app.routes
 import akka.http.scaladsl.model.{ContentTypes, HttpEntity}
 import akka.http.scaladsl.server.Directives._
 import akka.http.scaladsl.unmarshalling.PredefinedFromStringUnmarshallers.CsvSeq
+import com.github.vladminzatu.providentia.repository.ReferencesRepository
 
-object References {
+class References(val referencesRepository: ReferencesRepository) {
 
   val route = pathPrefix("references") {
     (path(Segment) & pathEndOrSingleSlash) { id =>

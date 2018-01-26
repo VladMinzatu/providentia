@@ -3,7 +3,7 @@ package com.github.vladminzatu.providentia.app.routes
 import akka.http.scaladsl.model.{ContentTypes, HttpEntity}
 import akka.http.scaladsl.server.Directives.{complete, get, pathEndOrSingleSlash, pathPrefix}
 
-object Health {
+class Health {
 
   val route = pathPrefix("health") {
     pathEndOrSingleSlash {
