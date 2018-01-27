@@ -1,24 +1,36 @@
 package com.github.vladminzatu.providentia.app.routes
 
-import akka.http.scaladsl.model.{ContentTypes, HttpEntity}
+import akka.http.scaladsl.model.StatusCodes
 import akka.http.scaladsl.server.Directives._
+import com.github.vladminzatu.providentia.model.Tag
 import com.github.vladminzatu.providentia.repository.TagsRepository
 
-class Tags(val tagsRepository: TagsRepository) {
+class Tags(val tagsRepository: TagsRepository) extends JsonSupport {
 
   val route = pathPrefix("tags") {
     (path(Segment) & pathEndOrSingleSlash) { id =>
       get {
-        complete(HttpEntity(ContentTypes.`text/html(UTF-8)`, s"Tag with id $id"))
+        rejectEmptyResponse {
+          complete(tagsRepository.getTagById(id))
+        }
       } ~ put {
-        complete(HttpEntity(ContentTypes.`text/html(UTF-8)`, s"Update tag with id $id"))
+        rejectEmptyResponse {
+          entity(as[Tag]) { tag =>
+            complete(tagsRepository.updateTag(Tag(id, tag.name)))
+          }
+        }
       }
     } ~
       pathEndOrSingleSlash {
         get {
-          complete(HttpEntity(ContentTypes.`text/html(UTF-8)`, "List of all tags"))
+          complete(tagsRepository.getAllTags())
         } ~ post {
-          complete(HttpEntity(ContentTypes.`text/html(UTF-8)`, "Create a new tag"))
+            entity(as[Tag]) { tag =>
+              tagsRepository.addNewTag(tag) match {
+                case None => complete(StatusCodes.InternalServerError)
+                case Some(_) => complete(StatusCodes.Created)
+              }
+            }
         }
       }
   }

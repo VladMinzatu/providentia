@@ -1,30 +1,42 @@
 package com.github.vladminzatu.providentia.app.routes
 
-import akka.http.scaladsl.model.{ContentTypes, HttpEntity}
+import akka.http.scaladsl.model.StatusCodes
 import akka.http.scaladsl.server.Directives._
 import akka.http.scaladsl.unmarshalling.PredefinedFromStringUnmarshallers.CsvSeq
+import com.github.vladminzatu.providentia.model.Reference
 import com.github.vladminzatu.providentia.repository.ReferencesRepository
 
-class References(val referencesRepository: ReferencesRepository) {
+class References(val referencesRepository: ReferencesRepository) extends JsonSupport {
 
   val route = pathPrefix("references") {
     (path(Segment) & pathEndOrSingleSlash) { id =>
         get {
-          complete(HttpEntity(ContentTypes.`text/html(UTF-8)`, s"Reference with id $id"))
+          rejectEmptyResponse {
+            complete(referencesRepository.getReferenceById(id))
+          }
         } ~ put {
-          complete(HttpEntity(ContentTypes.`text/html(UTF-8)`, s"Update reference with id $id"))
+          rejectEmptyResponse {
+            entity(as[Reference]) { reference =>
+              complete(referencesRepository.updateReference(reference.copy(id = id)))
+            }
+          }
         }
       } ~
       pathEndOrSingleSlash {
         get {
           parameter("tags".as(CsvSeq[String])) { tags => {
-            complete(HttpEntity(ContentTypes.`text/html(UTF-8)`, s"List of all references filtered by $tags"))
+            complete(referencesRepository.getReferencesByTags(tags))
           }
           } ~ {
-            complete(HttpEntity(ContentTypes.`text/html(UTF-8)`, "List of all references"))
+            complete(referencesRepository.getAllReferences())
           }
         } ~ post {
-          complete(HttpEntity(ContentTypes.`text/html(UTF-8)`, "Create a new reference"))
+          entity(as[Reference]) { reference =>
+            referencesRepository.addNewReference(reference) match {
+              case None => complete(StatusCodes.InternalServerError)
+              case Some(_) => complete(StatusCodes.Created)
+            }
+          }
         }
       }
   }

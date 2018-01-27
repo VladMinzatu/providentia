@@ -6,7 +6,11 @@ trait ReferencesRepository {
 
   def getAllReferences(): List[Reference]
 
-  def getReferencesByTags(tagIds: List[String]): List[Reference]
+  def getReferencesByTags(tagIds: Seq[String]): List[Reference]
 
   def getReferenceById(id: String): Option[Reference]
+
+  def updateReference(reference: Reference): Option[Reference]
+
+  def addNewReference(reference: Reference): Option[Reference]
 }

@@ -1,82 +1,73 @@
 package com.github.vladminzatu.providentia.app.routes
 
 import akka.http.scaladsl.model.StatusCodes
+import akka.http.scaladsl.server.Route
 import akka.http.scaladsl.testkit.ScalatestRouteTest
-import com.github.vladminzatu.providentia.repository.impl.mock.MockReferencesRepository
+import com.github.vladminzatu.providentia.model.Reference
+import com.github.vladminzatu.providentia.repository.impl.mock.{MockData, MockReferencesRepository}
 import org.scalatest.{Matchers, WordSpec}
 
-class ReferencesTest extends WordSpec with Matchers with ScalatestRouteTest {
+class ReferencesTest extends WordSpec with Matchers with ScalatestRouteTest with JsonSupport {
 
   val route = new References(new MockReferencesRepository()).route
   
   "The service " should {
-    "return 200 - 'List of all references' on the references endpoint" in {
+    "return 200 and the list of all references " in {
       Get("/references") ~> route ~> check {
         status shouldEqual StatusCodes.OK
-        responseAs[String] shouldEqual "List of all references"
+        responseAs[List[Reference]] shouldEqual MockData.references
       }
 
       Get("/references/") ~> route ~> check {
         status shouldEqual StatusCodes.OK
-        responseAs[String] shouldEqual "List of all references"
+        responseAs[List[Reference]] shouldEqual MockData.references
       }
     }
 
-    "return 200 - 'Create a new reference' on the references endpoint" in {
-      Post("/references") ~> route ~> check {
-        status shouldEqual StatusCodes.OK
-        responseAs[String] shouldEqual "Create a new reference"
-      }
-
-      Post("/references/") ~> route ~> check {
-        status shouldEqual StatusCodes.OK
-        responseAs[String] shouldEqual "Create a new reference"
+    "return 204 and create new reference " in {
+      Post("/references", MockData.references(0).copy(name = "New Scala Ref")) ~> route ~> check {
+        status shouldEqual StatusCodes.Created
+        MockData.references.size shouldEqual 5
+        MockData.references.find(_.id == "5").get.name shouldEqual "New Scala Ref"
       }
     }
 
-    "return 200 - 'List of all references filtered by ...' on the references endpoint" in {
+    "return 200 and references filtered by tags " in {
       Get("/references?tags=") ~> route ~> check {
         status shouldEqual StatusCodes.OK
-        responseAs[String] shouldEqual "List of all references filtered by List()"
+        responseAs[List[Reference]] shouldEqual List()
       }
 
-      Get("/references?tags=tag_foo") ~> route ~> check {
+      Get("/references?tags=2") ~> route ~> check {
         status shouldEqual StatusCodes.OK
-        responseAs[String] shouldEqual "List of all references filtered by List(tag_foo)"
-      }
-
-      Get("/references?tags=tag_foo,tag_bar") ~> route ~> check {
-        status shouldEqual StatusCodes.OK
-        responseAs[String] shouldEqual "List of all references filtered by List(tag_foo, tag_bar)"
-      }
-
-      Get("/references/?tags=tag_foo,tag_bar") ~> route ~> check {
-        status shouldEqual StatusCodes.OK
-        responseAs[String] shouldEqual "List of all references filtered by List(tag_foo, tag_bar)"
+        responseAs[List[Reference]] shouldEqual List(MockData.references(3), MockData.references(4))
       }
     }
 
-    "return 200 - 'Reference with id ...' on the references endpoint" in {
-      Get("/references/ref_foo") ~> route ~> check {
+    "return 200 and reference with the given id " in {
+      Get("/references/1") ~> route ~> check {
         status shouldEqual StatusCodes.OK
-        responseAs[String] shouldEqual "Reference with id ref_foo"
-      }
-
-      Get("/references/ref_bar") ~> route ~> check {
-        status shouldEqual StatusCodes.OK
-        responseAs[String] shouldEqual "Reference with id ref_bar"
+        responseAs[Reference] shouldEqual MockData.references.find(_.id == "1").get
       }
     }
 
-    "return 200 - 'Update reference with id ...' on the references endpoint" in {
-      Put("/references/ref_foo") ~> route ~> check {
-        status shouldEqual StatusCodes.OK
-        responseAs[String] shouldEqual "Update reference with id ref_foo"
+    "return 404 due to non-existing reference " in {
+      Get("/references/not-an-id") ~> Route.seal(route) ~> check {
+        status shouldEqual StatusCodes.NotFound
       }
+    }
 
-      Put("/references/ref_bar") ~> route ~> check {
+    "return 200 and update the reference with the given id" in {
+      val ref = MockData.references.find(_.id == "1").get
+      Put("/references/1", ref.copy(name = "New Name")) ~> route ~> check {
         status shouldEqual StatusCodes.OK
-        responseAs[String] shouldEqual "Update reference with id ref_bar"
+        MockData.references.find(_.id == "1").get.name shouldEqual "New Name"
+      }
+    }
+
+    "return 404 when trying to update unknown ref " in {
+      Put("/references/not-an-id", MockData.references.find(_.id == "1").get.copy(name = "New Name")) ~> Route.seal(route) ~> check {
+        status shouldEqual StatusCodes.NotFound
       }
     }
   }

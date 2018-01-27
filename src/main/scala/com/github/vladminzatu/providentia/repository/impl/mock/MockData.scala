@@ -8,9 +8,9 @@ object MockData {
   val pythonTag = Tag("2", "Python")
   val mlTag = Tag("3", "Machine Learning")
 
-  val tags = List(scalaTag, pythonTag, mlTag)
+  var tags = List(scalaTag, pythonTag, mlTag)
 
-  val references = List(
+  var references = List(
     Reference("1", "Scala School", "https://twitter.github.io/scala_school/", List(scalaTag.id)),
     Reference("2", "Effective Scala", "http://twitter.github.io/effectivescala/", List(scalaTag.id)),
     Reference("3", "Effective Python", "https://www.amazon.com/Effective-Python-Specific-Software-Development/dp/0134034287", List(pythonTag.id)),
